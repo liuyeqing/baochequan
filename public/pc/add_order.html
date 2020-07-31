@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>下单</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+<ul class="publish_condition">
+  <li class="pull_left">
+    座位数：
+    <select class="seat">
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+    </select>
+  </li>
+</ul>
+<div>
+  <div>
+    用车时间：
+    <input type="text" class="use_car_time">
+  </div>
+  <div>
+    出发地：
+    <input id="suggestId" type="text" class="start_city" placeholder="请输入地址" required="required">
+    <input type="text" class="start_log_lat">
+  </div>
+  <div>
+    目的地：
+    <input  id="suggestId2" type="text" class="end_city" placeholder="请输入目的地">
+    <input type="text" class="end_log_lat">
+  </div>
+</div>
+<div id="searchResultPanel"></div>
+<div>
+  <button type="button" class="submit">发布</button>
+</div>
+<!--百度地图-->
+<div id="mapContainer" style="display: none;"></div>
+<script src="../js/jquery.js"></script>
+<script src="https://cdn.bootcss.com/layer/2.3/layer.js"></script>
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=nggT1SjpfbXB6kmEXLh0X4uvEzRkhK8p"></script>
+<script>
+  // 百度地图API功能
+  function G(id) {
+    return document.getElementById(id);
+  }
+  var map = new BMap.Map("mapContainer");
+  map.centerAndZoom("北京",12);                   // 初始化地图,设置城市和地图级别。
+  get_address('suggestId');
+  get_address('suggestId2');
+  function get_address(ele){
+    var ac = new BMap.Autocomplete(    //建立一个自动完成的对象
+      {
+        "input" : ele,
+        "location" : map
+      });
+    ac.addEventListener("onhighlight", function(e) {  //鼠标放在下拉列表上的事件
+      var str = "";
+      var _value = e.fromitem.value;
+      var value = "";
+      if (e.fromitem.index > -1) {
+        value = _value.province +  _value.city +  _value.district +  _value.street +  _value.business;
+      }
+      str = "FromItem<br />index = " + e.fromitem.index + "<br />value = " + value;
+      value = "";
+      if (e.toitem.index > -1) {
+        _value = e.toitem.value;
+        value = _value.province +  _value.city +  _value.district +  _value.street +  _value.business;
+      }
+      str += "<br />ToItem<br />index = " + e.toitem.index + "<br />value = " + value;
+      G("searchResultPanel").innerHTML = str;
+    });
+    var myValue;
+    ac.addEventListener("onconfirm", function(e) {    //鼠标点击下拉列表后的事件
+      var _value = e.item.value;
+      myValue = _value.province +  _value.city +  _value.district +  _value.street +  _value.business;
+      var myGeocoder = new BMap.Geocoder();
+      myGeocoder.getPoint(myValue, function (point) {
+        $(`#${ele}`).next().val(`${point.lng},${point.lat}`);
+      });
+      G("searchResultPanel").innerHTML ="onconfirm<br />index = " + e.item.index + "<br />myValue = " + myValue;
+      setPlace();
+    });
+    function setPlace(){
+      map.clearOverlays();    //清除地图上所有覆盖物
+      function myFun(){
+        var pp = local.getResults().getPoi(0).point;    //获取第一个智能搜索的结果
+        map.centerAndZoom(pp, 18);
+        map.addOverlay(new BMap.Marker(pp));    //添加标注
+      }
+      var local = new BMap.LocalSearch(map, { //智能搜索
+        onSearchComplete: myFun
+      });
+      local.search(myValue);
+    }
+  }
+  $('.submit').on('click', function () {
+    // 百度地图API功能
+    var map = new BMap.Map("mapContainer");
+    map.centerAndZoom("重庆",12);  //初始化地图,设置城市和地图级别。
+    var pointA = new BMap.Point($('.start_log_lat').val().split(',')[0], $('.start_log_lat').val().split(',')[1]);  // 创建点坐标A--大渡口区
+    var pointB = new BMap.Point($('.end_log_lat').val().split(',')[0], $('.end_log_lat').val().split(',')[1]);  // 创建点坐标B--江北区
+    let mileage = map.getDistance(pointA, pointB).toFixed(2); //获取两点距离,保留小数点后两位
+    var polyline = new BMap.Polyline([pointA,pointB], {strokeColor:"blue", strokeWeight:6, strokeOpacity:0.5});  //定义折线
+    map.addOverlay(polyline);     //添加折线到地图上
+    let data = {
+      account : JSON.parse(localStorage.getItem('user_data')).account,
+      seat : $('.seat').val(),
+      use_car_time : $('.use_car_time').val(),
+      start_city : $('.start_city').val(),
+      end_city : $('.end_city').val(),
+      mileage
+    };
+    data = JSON.stringify(data);
+    $.ajax({
+      type : 'POST',
+      url : '/add_order',
+      contentType: "application/json", //必须有
+      dataType: "json", //表示返回值类型，不必须
+      data,
+      success(data){
+        alert(data);
+      }
+    });
+  });
+</script>
+</body>
+</html>

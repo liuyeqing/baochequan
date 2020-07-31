@@ -1,0 +1,16 @@
+*{
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.pull_left{
+  float: left;
+}
+.pull_right{
+  float: right;
+}
+.clearfix:after{
+  content: '';
+  display: block;
+  clear: both;
+}

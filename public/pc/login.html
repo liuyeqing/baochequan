@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>登录</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+<h1>登录</h1>
+<ul>
+  <li>
+    账号：
+    <input type="text" class="account">
+  </li>
+  <li>
+    密码：
+    <input type="password" class="password">
+  </li>
+  <li>
+    <input type="submit" value="登录" class="submit">
+  </li>
+  <li>
+    <a href="register.html">还没有账号？去注册</a>
+  </li>
+</ul>
+<script src="../js/jquery.js"></script>
+<script>
+  $('.submit').on('click', function () {
+    $.ajax({
+      url : '/login',
+      data : {
+        account : $('.account').val(),
+        password : $('.password').val(),
+      },
+      success(data){
+        console.log('login data1111111', data);
+        data = JSON.parse(data);
+        alert(data.msg);
+        if(data.code == 2){
+          delete data.msg;
+          delete data.code;
+          localStorage.setItem('user_data', JSON.stringify(data)); //登录时后端返回的信息
+          location.href = 'add_order.html';
+        }
+      }
+    });
+  });
+</script>
+</body>
+</html>

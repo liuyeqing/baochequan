@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>包车圈</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+<ul class="list">
+</ul>
+<div class="no_data">暂无数据</div>
+<script src="../js/jquery.js"></script>
+<script>
+  // 判断有没有头像
+  if(!localStorage.getItem('user_data')){
+    alert('暂未登录，请登录');
+    location.href = 'login.html';
+  }
+
+  let pageIndex = 0;  //博客列表的页数
+  $('.prev').on('click', function () {
+    --pageIndex;
+    get_list(pageIndex);
+  });
+  $('.next').on('click', function () {
+    ++pageIndex;
+    get_list(pageIndex);
+  });
+
+  // 点击退出按钮
+  $('.exit').on('click', function () {
+    localStorage.clear();
+    location.href = 'login.html';
+  });
+
+
+  // 获取博客列表
+  function get_list(pageIndex){
+    $('.list').html('');
+    $.ajax({
+      url : '/get_list',
+      data : {
+        // account : JSON.parse(localStorage.getItem('user_data')).account,
+        pageIndex
+      },
+      success(data){
+        let list = JSON.parse(data).result;
+        console.log('list', list);
+        // 如果每个都有值，并且每条数据的get_order_people都是null，就$('.no_data').show();
+        if(list.length == 0){
+          $('.no_data').show();
+        }
+        else{
+          for(let i = 0;i < list.length;i++){
+            $('.list').append(`
+              <li data-order_id="${list[i].order_id}" data-account="${list[i].account}" class="order_detail" style="display: ${list[i].get_order_people != null  ? 'none' : 'block'}">
+                <div class="clearfix">
+                  <img class="head_portrait pull_left" src="${list[i].head_portrait ? list[i].head_portrait : 'http://b.hiphotos.baidu.com/image/h%3D300/sign=ad628627aacc7cd9e52d32d909032104/32fa828ba61ea8d3fcd2e9ce9e0a304e241f5803.jpg'}" alt="">
+                  <div class="pull_left">${list[i].account}</div>
+                  <div class="pull_right">单号：${list[i].order_id}</div>
+                </div>
+                <ul>
+                  <li>用车座位：${list[i].seat}</li>
+                  <li>用车时间：${list[i].use_car_time}</li>
+                  <li>行程：${list[i].start_city} - ${list[i].end_city}</li>
+                  <li>总里程：${list[i].mileage}公里</li>
+                  <li>
+                    <button type="button" class="get_order">抢单</button>
+                  </li>
+                </ul>
+              </li>
+            `);
+          }
+        }
+      }
+    });
+  }
+  get_list(0);
+
+  $('.list').on('click', '.get_order', function (e) {
+    // 如果这个订单是自己发布的话，自己不能抢单
+    let account = $(this).parents('.order_detail').attr('data-account'); //发单人账号
+    let get_order_people = JSON.parse(localStorage.getItem('user_data')).account; //抢单人账号
+
+    if(account == get_order_people){
+      alert('不能抢自己发布的订单');
+      return false;
+    }
+    let order_id = $(this).parents('.order_detail').attr('data-order_id'); //订单id
+    // 抢单
+    let data = {
+      account,
+      get_order_people,
+      order_id
+    };
+    data = JSON.stringify(data);
+    $.ajax({
+      url : '/get_order',
+      method : 'POST',
+      contentType: "application/json", //必须有
+      dataType: "json", //表示返回值类型，不必须
+      data,
+      success(data){
+        if(data.code == 2){
+          alert(data.msg);
+          get_list(0);
+        }
+      },
+      fail(data){
+        alert(data.msg);
+      }
+    });
+    e.stopPropagation();
+  });
+</script>
+</body>
+</html>

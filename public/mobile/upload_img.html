@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>uploadImg-node-demo</title>
+    </head>
+    <body>
+
+    <div class="form-group">
+        <label>File input:</label>
+
+        <input type="file" name="file" id="file">
+
+        <p id="result"></p>
+
+        <img id="img" src="">
+    </div>
+
+    <button id="upload" class="btn btn-default">提交</button>
+
+    </body>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        //上传图片的业务逻辑函数
+        function uploadFile(){
+            //上传图片的input
+            var file = document.getElementById("file")
+            //因为准备用post提交，又因为图片的内容比较大，所以我们选择使用formdata来承载数据
+            //创建formdata对象
+            var formData = new FormData();
+            //给formdata对象中放入数据(键值对的方式)
+            formData.append('file',file.files[0]);
+            //提交请求
+            $.ajax({
+                url: '/upload',//请求路径
+                type: 'POST',
+                data: formData,
+                contentType: false,//为了让浏览器根据传入的formdata来判断contentType
+                processData: false,//同上
+                success: function(data){
+                    if(200 === data.code) {
+                        $('#result').html("上传成功！");
+                        $('#img').attr('src',data.data);
+                    } else {
+                        $('#result').html("上传失败！");
+                    }
+                    console.log(2)
+                },
+                error: function(){
+                    $("#result").html("与服务器通信发生错误");
+                }
+            });
+            console.log(1)
+        }
+
+        $('#file').on('change', function () {
+          uploadFile();
+        });
+
+        // //给按钮添加点击事件
+        // function postPage() {
+        //         //上传按钮
+        //         var uploada = document.getElementById('upload');
+        //         uploada.addEventListener("click",function () {
+        //             uploadFile();
+        //         },false);
+        // }
+        // window.onload = function () {
+        //     postPage();
+        // }
+    </script>
+</html>

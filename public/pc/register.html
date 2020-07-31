@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>注册</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+<h1>注册</h1>
+<ul>
+  <li>
+    账号：
+    <input type="text" class="account">
+  </li>
+  <li>
+    密码：
+    <input type="password" class="password">
+  </li>
+  <!--<li>-->
+    <!--头像：-->
+    <!--<input type="file" class="head_portrait">-->
+  <!--</li>-->
+  <li>
+    上传头像：
+    <input type="file" name="file" id="file">
+    <img id="img" src="">
+  </li>
+  <li>
+    <input type="submit" class="submit" value="注册">
+  </li>
+  <li>
+    <a href="login.html">已有账号？去登录</a>
+  </li>
+</ul>
+<script src="../js/jquery.js"></script>
+<script>
+  //上传图片的业务逻辑函数
+  function uploadFile(){
+    //上传图片的input
+    var file = document.getElementById("file")
+    //因为准备用post提交，又因为图片的内容比较大，所以我们选择使用formdata来承载数据
+    //创建formdata对象
+    var formData = new FormData();
+    //给formdata对象中放入数据(键值对的方式)
+    formData.append('file',file.files[0]);
+    //提交请求
+    $.ajax({
+      url: '/upload',//请求路径
+      type: 'POST',
+      data: formData,
+      contentType: false,//为了让浏览器根据传入的formdata来判断contentType
+      processData: false,//同上
+      success: function(data){
+        console.log('data', data);
+        if(data.code == 2) {
+          console.log('uploadFile data', data);
+          alert("上传成功！");
+          $('#img').attr('src',data.data);
+        } else {
+          alert("上传失败！");
+        }
+      },
+      error: function(){
+        alert("与服务器通信发生错误");
+      }
+    });
+  }
+
+  $('#file').on('change', function () {
+    uploadFile();
+  });
+
+  $('.submit').on('click', function () {
+    console.log("$('#img').attr('src')", $('#img').attr('src'));
+    $.ajax({
+      url: '/register',
+      data: {
+        account: $('.account').val(),
+        password: $('.password').val(),
+        head_portrait : $('#img').attr('src')
+      },
+      success(data) {
+        console.log('data', data);
+        alert(data);
+        if (data == '注册成功') {
+          location.href = 'login.html';
+        }
+      }
+    });
+  });
+</script>
+</body>
+</html>

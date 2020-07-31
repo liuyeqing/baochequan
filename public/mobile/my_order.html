@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>我的博客</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+<h1>我抢的订单</h1>
+<ul class="list">
+</ul>
+<div>
+  博客总数量：<span class="total_num"></span>
+  <button type="button" class="prev">上一页</button>
+  <button type="button" class="next">下一页</button>
+</div>
+<div class="no_data">暂无数据</div>
+<script src="../js/jquery.js"></script>
+<script>
+  // 判断有没有头像
+  if(!localStorage.getItem('user_data')){
+    alert('暂未登录，请登录');
+    location.href = 'login.html';
+  }
+
+  let pageIndex = 0;  //博客列表的页数
+  $('.prev').on('click', function () {
+    --pageIndex;
+    get_list(pageIndex);
+  });
+  $('.next').on('click', function () {
+    ++pageIndex;
+    get_list(pageIndex);
+  });
+
+  // 获取我抢的订单
+  function get_list(pageIndex){
+    $('.list').html('');
+    let data = {
+      get_order_people : JSON.parse(localStorage.getItem('user_data')).account,
+      pageIndex
+    };
+    data = JSON.stringify(data);
+    $.ajax({
+      url : '/get_my_order_list',
+      method : 'POST',
+      contentType: "application/json", //必须有
+      dataType: "json", //表示返回值类型，不必须
+      data,
+      success(data){
+        let list = data.result;
+        let total_num = data.total_num;
+        $('.total_num').html(total_num);
+        if(list.length == 0){
+          $('.no_data').show();
+        }
+        else{
+          for(let i = 0;i < list.length;i++){
+            $('.list').append(`
+              <li data-order_id="${list[i].order_id}">
+                出发地：<span>${list[i].start_city}</span>
+                目的地：<span>${list[i].end_city}</span>
+                距离：<span>${list[i].mileage}公里</span>
+                <button type="button" class="cancel_order">取消订单</button>
+              </li>
+            `);
+          }
+        }
+      }
+    });
+  }
+  get_list(0);
+
+  // 取消订单
+  $('.list').on('click', '.cancel_order', function () {
+    console.log("$(this).parents('li').attr('data-order_id')", $(this).parents('li').attr('data-order_id'));
+    let data = {
+      order_id : $(this).parents('li').attr('data-order_id')
+    };
+    data = JSON.stringify(data);
+    $.ajax({
+      url : '/cancel_order',
+      method : 'post',
+      contentType: "application/json", //必须有
+      dataType: "json", //表示返回值类型，不必须
+      data,
+      success(data){
+        console.log('cancel_order data', data);
+        get_list(0);
+      }
+    });
+  });
+</script>
+</body>
+</html>
